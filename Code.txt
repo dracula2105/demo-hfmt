@@ -1,0 +1,23 @@
+let
+    Source = Csv.Document(File.Contents("D:\DATA_DEMO.csv"),[Delimiter=",", Columns=11, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"URL", type text}, {"ID", type text}, {"Time", type time}, {"X0", Int64.Type}, {"X1", Int64.Type}, {"X2", Int64.Type}, {"X3", Int64.Type}, {"X4", Int64.Type}, {"X5", Int64.Type}, {"Y", type time}, {"Actual", Int64.Type}}),
+    #"Added Custom" = Table.AddColumn(#"Changed Type", "Predict", each let
+    url = [URL],
+    data = Text.From([X0])&","&Text.From([X1])&","&Text.From([X2])&","&Text.From([X3])&","&Text.From([X4])&","&Text.From([X5]),
+    body  = "{ ""data"": [["&data&"]]}",
+     Parsed_JSON = Json.Document(body),
+     BuildQueryString = Uri.BuildQueryString(Parsed_JSON),
+     Source = Json.Document(Web.Contents(url,[Headers = [#"Content-Type"="application/json"], Content = Text.ToBinary(body) ] )), Result = Text.Select(Source,{"0".."9",",","."})
+in
+    Result,  type number),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Added Custom",{{"Predict", type number}})
+in
+    #"Changed Type1"
+	
++++++++++
+Time Predict Door Closing = FORMAT( [Predict] / 60 / 60 /24, "hh:nn:ss" )
+Time Actual Door Closing = FORMAT( [Actual] / 60 / 60 /24, "hh:nn:ss" )
+Temp = ([Predict]-DEMO1[Actual])*([Predict]-DEMO1[Actual])
+Door = "Door "& [ID] 
+RMSD = FORMAT( CALCULATE(SQRT(AVERAGE('DEMO'[Temp]))) / 60 / 60 /24, "hh:nn:ss" )
