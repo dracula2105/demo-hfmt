@@ -1,0 +1,31 @@
+ 
+import json
+import numpy as np
+import os
+import pickle
+from sklearn.externals import joblib
+from sklearn.linear_model import LogisticRegression
+ 
+from azureml.core.model import Model
+ 
+def init():
+    global model
+    # retrieve the path to the model file using the model name
+    model_path = Model.get_model_path('door_failures_prognosis_data')
+    model = joblib.load(model_path)
+ 
+def run(raw_data):
+    n = 21
+    input = np.array(json.loads(raw_data)['data'])
+    data = []
+    for i in range(0, len(input) - n + 1):
+        input_temp = []
+        for j in range(i, i + n):
+            input_temp.append(input[j])
+        data.append(input_temp);
+    # make prediction
+    y_hat = model.predict(data)
+    response=[]
+    for(i in len(y_hat.tolist())
+         response.append(int(round(i)))
+    return json.dumps(response)
