@@ -1,4 +1,3 @@
- 
 import json
 import numpy as np
 import os
@@ -11,7 +10,7 @@ from azureml.core.model import Model
 def init():
     global model
     # retrieve the path to the model file using the model name
-    model_path = Model.get_model_path('door_failures_prognosis_data')
+    model_path = Model.get_model_path('door_failures_prognosis_demo')
     model = joblib.load(model_path)
  
 def run(raw_data):
@@ -25,7 +24,5 @@ def run(raw_data):
         data.append(input_temp);
     # make prediction
     y_hat = model.predict(data)
-    response=[]
-    for(i in len(y_hat.tolist())
-         response.append(int(round(i)))
-    return json.dumps(response)
+    np.round(np.clip(y_hat, 0, 1))
+    return json.dumps(y_hat.tolist())
